@@ -7,6 +7,7 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
 import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
@@ -21,6 +22,7 @@ import net.minecraft.village.TradeOffers;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.spongepowered.asm.mixin.injection.code.InsnListReadOnly;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -33,6 +35,7 @@ public class Exchangemachinemod implements ModInitializer {
 
     public static final Block EXCHANGE_BLOCK  = new ExchangeBlock(FabricBlockSettings.create().strength(1.0f).nonOpaque());
     public static final Item EXCHANGE_BLOCK_ITEM = new BlockItem(EXCHANGE_BLOCK, new FabricItemSettings());
+    public static final List<DailyShopTradeOffer> SYNC_TRADES = new ArrayList<>();
 
     // Default Config
     public static String defaultConfig = "{\n" +
@@ -49,6 +52,7 @@ public class Exchangemachinemod implements ModInitializer {
             "      \"price\": 3,\n" +
             "      \"amount\": 16,\n" +
             "      \"rarity\": 1\n" +
+            "      \"color\": \"FFFFFF00\"\n" +
             "    },\n" +
             "    \"minecraft:wheat_seeds\": {\n" +
             "      \"currency\": \"minecraft:iron_ingot\",\n" +
@@ -196,13 +200,19 @@ public class Exchangemachinemod implements ModInitializer {
             List<TradeOffers.Factory> tradeOfferList = new ArrayList<>();
             JsonObject items = json.getAsJsonObject("trades");
             for (Map.Entry<String, JsonElement> entry : items.entrySet()) {
-                String itemName = entry.getKey();
-                int price = entry.getValue().getAsJsonObject().get("price").getAsInt();
-                int amount = entry.getValue().getAsJsonObject().get("amount").getAsInt();
-                String currency = entry.getValue().getAsJsonObject().get("currency").getAsString();
+                String toShopItem = entry.getKey();
+                int fromShopAmount = entry.getValue().getAsJsonObject().get("price").getAsInt();
+                int toShopAmount = entry.getValue().getAsJsonObject().get("amount").getAsInt();
+                String fromShopItem = entry.getValue().getAsJsonObject().get("currency").getAsString();
                 int rarity = entry.getValue().getAsJsonObject().get("rarity").getAsInt();
+                var el = entry.getValue().getAsJsonObject().get("color");
+                String color = null;
+                if(el != null){
+                    color = el.getAsString();
+                }
                 rarities.add(rarity);
-                tradeOfferList.add(new ExchangeFactory(Registries.ITEM.get(new Identifier(itemName)), Registries.ITEM.get(new Identifier(currency)), price, amount));
+                SYNC_TRADES.add(new DailyShopTradeOffer(new Identifier(toShopItem),new Identifier(fromShopItem),toShopAmount,fromShopAmount,color));
+                tradeOfferList.add(new ExchangeFactory(Registries.ITEM.get(new Identifier(toShopItem)), Registries.ITEM.get(new Identifier(fromShopItem)), fromShopAmount, toShopAmount));
             }
 
             TRADES = tradeOfferList.toArray(new TradeOffers.Factory[0]);
@@ -224,6 +234,7 @@ public class Exchangemachinemod implements ModInitializer {
                     context.getSource().sendMessage(Text.literal("Config reloaded."));
                     return 1;
                 })));
+        ServerPlayConnectionEvents.INIT.register(ConfigSynchronizer::server);
     }
 
     public static void reload() {

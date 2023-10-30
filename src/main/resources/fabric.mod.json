@@ -14,6 +14,9 @@
   "entrypoints": {
     "main": [
       "dev.v4lk.exmod.Exchangemachinemod"
+    ],
+    "client": [
+      "dev.v4lk.exmod.client.ExchangemachinemodClient"
     ]
   },
   "mixins": [

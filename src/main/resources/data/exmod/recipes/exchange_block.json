@@ -1,6 +1,5 @@
 {
   "type": "minecraft:crafting_shaped",
-  "category": "misc",
   "pattern": [
     "###",
     "O O",
@@ -8,13 +7,13 @@
   ],
   "key": {
     "#": {
-      "item": "minecraft:white_wool"
+      "tag": "minecraft:wool"
     },
     "O": {
-      "item": "minecraft:fences"
+      "tag": "minecraft:fences"
     },
     "A": {
-      "item": "minecraft:planks"
+      "tag": "minecraft:planks"
     }
   },
   "result": {
