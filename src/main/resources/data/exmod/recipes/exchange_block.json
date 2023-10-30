@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "###",
+    "O O",
+    "AAA"
+  ],
+  "key": {
+    "#": {
+      "item": "minecraft:white_wool"
+    },
+    "O": {
+      "item": "minecraft:fences"
+    },
+    "A": {
+      "item": "minecraft:planks"
+    }
+  },
+  "result": {
+    "item": "exmod:exchange_block",
+    "count": 1
+  }
+}

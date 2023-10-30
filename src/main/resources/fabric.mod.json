@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "id": "exmod",
+  "version": "${version}",
+  "name": "Daily Shop",
+  "description": "",
+  "authors": [
+    "BCG Team V4Lk & Joe <3"
+  ],
+  "contact": {},
+  "license": "All-Rights-Reserved",
+  "icon": "assets/exmod/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "dev.v4lk.exmod.Exchangemachinemod"
+    ]
+  },
+  "mixins": [
+    "exmod.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric": "*",
+    "minecraft": "${minecraft_version}"
+  }
+}
