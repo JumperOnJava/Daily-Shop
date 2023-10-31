@@ -19,7 +19,7 @@
     "client": [
       "dev.v4lk.exmod.client.ExchangemachinemodClient",
       "dev.v4lk.sellingbin.client.SellingBinModClient",
-      "dev.v4lk.multitooltip.TooltipInit"
+      "io.github.jumperonjava.multitooltip.TooltipInit"
     ]
   },
   "mixins": [

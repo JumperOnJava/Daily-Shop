@@ -1,9 +1,6 @@
 package dev.v4lk.exmod;
 
-import dev.v4lk.exmod.client.ExchangemachinemodClient;
-import dev.v4lk.multitooltip.MultiTooltipData;
-import dev.v4lk.multitooltip.TooltipInit;
-import dev.v4lk.sellingbin.Trade;
+import io.github.jumperonjava.multitooltipapi.MutliTooltipApi;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.FabricPacket;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
@@ -31,8 +28,8 @@ public class ConfigSynchronizer {
     }
 
     private static void sync(SyncPacket syncPacket, ClientPlayerEntity clientPlayerEntity, PacketSender packetSender) {
-        TooltipInit.matches.removeIf(match -> match instanceof DailyShopTradeOffer);
-        TooltipInit.matches.addAll(syncPacket.trades);
+        MutliTooltipApi.matches.removeIf(match -> match instanceof DailyShopTradeOffer);
+        MutliTooltipApi.matches.addAll(syncPacket.trades);
     }
 
     public static class SyncPacket implements FabricPacket {
