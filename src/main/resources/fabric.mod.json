@@ -14,12 +14,9 @@
   "entrypoints": {
     "main": [
       "dev.v4lk.exmod.Exchangemachinemod",
-      "dev.v4lk.sellingbin.SellingBinMod"
     ],
     "client": [
       "dev.v4lk.exmod.client.ExchangemachinemodClient",
-      "dev.v4lk.sellingbin.client.SellingBinModClient",
-      "io.github.jumperonjava.multitooltip.TooltipInit"
     ]
   },
   "mixins": [
@@ -28,6 +25,7 @@
   "depends": {
     "fabricloader": ">=${loader_version}",
     "fabric": "*",
-    "minecraft": "${minecraft_version}"
+    "minecraft": "${minecraft_version}",
+    "mutlitooltipapi": "*"
   }
 }
