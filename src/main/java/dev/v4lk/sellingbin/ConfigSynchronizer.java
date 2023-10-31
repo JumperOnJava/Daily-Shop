@@ -1,9 +1,8 @@
-package dev.v4lk.exmod;
+package dev.v4lk.sellingbin;
 
-import dev.v4lk.exmod.client.ExchangemachinemodClient;
-import dev.v4lk.multitooltip.MultiTooltipData;
+import dev.v4lk.exmod.DailyShopTradeOffer;
 import dev.v4lk.multitooltip.TooltipInit;
-import dev.v4lk.sellingbin.Trade;
+import dev.v4lk.sellingbin.client.SellingBinModClient;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.FabricPacket;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
@@ -22,44 +21,53 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class ConfigSynchronizer {
-    public static final Identifier CHANNEL = new Identifier("exmod","init");
+    public static final Identifier CHANNEL = new Identifier("selling-bin","init");
     public static void server(ServerPlayNetworkHandler serverPlayNetworkHandler, MinecraftServer minecraftServer) {
-        ServerPlayNetworking.send(serverPlayNetworkHandler.player,new SyncPacket(Exchangemachinemod.SYNC_TRADES));
+        ServerPlayNetworking.send(serverPlayNetworkHandler.player,new SyncPacket(SellingBinMod.trades));
     }
     public static void client(ClientPlayNetworkHandler networkHandler, MinecraftClient client) {
         ClientPlayNetworking.registerGlobalReceiver(SyncPacket.TYPE,ConfigSynchronizer::sync);
     }
 
     private static void sync(SyncPacket syncPacket, ClientPlayerEntity clientPlayerEntity, PacketSender packetSender) {
-        TooltipInit.matches.removeIf(match -> match instanceof DailyShopTradeOffer);
+        TooltipInit.matches.removeIf(match -> match instanceof Trade);
         TooltipInit.matches.addAll(syncPacket.trades);
     }
 
+
     public static class SyncPacket implements FabricPacket {
 
-        public final List<DailyShopTradeOffer> trades;
+        public final List<Trade> trades;
 
         public SyncPacket(PacketByteBuf buf){
-            var l = new LinkedList<DailyShopTradeOffer>();
+            var l = new LinkedList<Trade>();
             var len = buf.readVarInt();
             for(int i=0;i<len;i++){
-                l.add(new DailyShopTradeOffer(buf.readIdentifier(), buf.readIdentifier(), buf.readVarInt(), buf.readVarInt(),buf.readInt()));
+                var t = new Trade();
+
+                t.setName(buf.readString());
+                t.setCurrency(buf.readString());
+                t.setSellPrice(buf.readVarInt());
+                t.setSellAmount(buf.readVarInt());
+                t.setColor(buf.readInt());
+                l.add(t);
             }
             trades = l;
         }
-        public SyncPacket(java.util.List<DailyShopTradeOffer> trades){
+        public SyncPacket(List<Trade> trades){
             this.trades = trades;
         }
         @Override
         public void write(PacketByteBuf buf) {
             buf.writeVarInt(trades.size());
             for(var t : trades){
-                buf.writeIdentifier(t.toShopItem);
-                buf.writeIdentifier(t.fromShopItem);
-                buf.writeVarInt(t.toShopAmount);
-                buf.writeVarInt(t.fromShopAmount);
+                buf.writeString(t.getName());
+                buf.writeString(t.getCurrency());
+                buf.writeVarInt(t.getSellPrice());
+                buf.writeVarInt(t.getSellAmount());
                 buf.writeInt(t.getColor());
             }
+
         }
         public PacketType<?> getType() {
             return TYPE;

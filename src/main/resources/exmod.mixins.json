@@ -1,12 +1,12 @@
 {
   "required": true,
   "minVersion": "0.8",
-  "package": "dev.v4lk.exmod.client.mixin",
+  "package": "dev.v4lk.multitooltip.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
-    "ItemTooltipMixin"
   ],
   "client": [
+    "ItemTooltipMixin"
   ],
   "injectors": {
     "defaultRequire": 1

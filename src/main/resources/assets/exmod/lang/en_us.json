@@ -1,7 +1,6 @@
 {
   "block.exmod.exchange_block": "Daily Shop",
   "exmod.avaliable": "Purchasable",
-  "exmod.tooltip.purchase": "Purchase",
-  "exmod.tooltip.for": "for"
+  "exmod.tooltip.purchase": "Purchase %sx for"
 }
 
