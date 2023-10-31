@@ -3,6 +3,7 @@ package dev.v4lk.exmod;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import io.github.jumperonjava.multitooltipapi.MutliTooltipApi;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
@@ -51,7 +52,7 @@ public class Exchangemachinemod implements ModInitializer {
             "      \"currency\": \"minecraft:iron_ingot\",\n" +
             "      \"price\": 3,\n" +
             "      \"amount\": 16,\n" +
-            "      \"rarity\": 1\n" +
+            "      \"rarity\": 1,\n" +
             "      \"color\": \"FFFFFF00\"\n" +
             "    },\n" +
             "    \"minecraft:wheat_seeds\": {\n" +
