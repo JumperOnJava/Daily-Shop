@@ -27,6 +27,7 @@ import org.spongepowered.asm.mixin.injection.code.InsnListReadOnly;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -197,6 +198,7 @@ public class Exchangemachinemod implements ModInitializer {
             JsonObject json = JsonParser.parseReader(new FileReader(configFile)).getAsJsonObject();
             ArrayList<Integer> rarities = new ArrayList<>();
 
+            var wrongIdItemsCheck = new HashMap<Identifier, Item>();
             tradeAmounts = json.get("trades-amount").getAsInt();
             List<TradeOffers.Factory> tradeOfferList = new ArrayList<>();
             JsonObject items = json.getAsJsonObject("trades");
@@ -212,9 +214,27 @@ public class Exchangemachinemod implements ModInitializer {
                     color = el.getAsString();
                 }
                 rarities.add(rarity);
-                SYNC_TRADES.add(new DailyShopTradeOffer(new Identifier(toShopItem),new Identifier(fromShopItem),toShopAmount,fromShopAmount,color));
-                tradeOfferList.add(new ExchangeFactory(Registries.ITEM.get(new Identifier(toShopItem)), Registries.ITEM.get(new Identifier(fromShopItem)), fromShopAmount, toShopAmount));
+                var toShopId = new Identifier(toShopItem);
+                var fromShopId = new Identifier(fromShopItem);
+                SYNC_TRADES.add(new DailyShopTradeOffer(toShopId, fromShopId, toShopAmount, fromShopAmount, color));
+                var toShop = Registries.ITEM.get(toShopId);
+                var fromShop = Registries.ITEM.get(fromShopId);
+
+                wrongIdItemsCheck.put(toShopId, toShop);
+                wrongIdItemsCheck.put(fromShopId, fromShop);
+
+                tradeOfferList.add(new ExchangeFactory(toShop, fromShop, fromShopAmount, toShopAmount));
             }
+            var hasErrorToCrash = false;
+            for (var key : wrongIdItemsCheck.keySet()) {
+                if (wrongIdItemsCheck.get(key).equals(Items.AIR)){
+                    LOGGER.error("WRONG ITEM IDENTIFIER %s".formatted(key));
+                    hasErrorToCrash=true;
+                }
+            }
+            if(hasErrorToCrash)
+                throw new RuntimeException("Config contains nonexistent items");
+
 
             TRADES = tradeOfferList.toArray(new TradeOffers.Factory[0]);
             raritiesList = rarities;
