@@ -1,9 +1,12 @@
 package dev.v4lk.exmod;
 
-import io.github.jumperonjava.multitooltipapi.Match;
-import io.github.jumperonjava.multitooltipapi.TextItemTooltipComponent;
 import net.minecraft.client.gui.tooltip.TooltipComponent;
 import net.minecraft.client.item.TooltipData;
+import net.minecraft.client.resource.language.I18n;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.entity.damage.DamageType;
+import net.minecraft.entity.damage.DamageTypes;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
 import net.minecraft.text.Style;
@@ -11,7 +14,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 
-public class DailyShopTradeOffer implements TooltipData, Match {
+public class DailyShopTradeOffer implements TooltipData{
     private String color = Integer.toString(Formatting.DARK_GRAY.getColorIndex(),16).toUpperCase();
     private static final String DEFAULT_COLOR = "FF555555";
     public final Identifier toShopItem;
@@ -40,22 +43,7 @@ public class DailyShopTradeOffer implements TooltipData, Match {
     public void setColor(int color) {
         this.color = Integer.toHexString(color);
     }
-
-    public TooltipComponent getTooltipComponent() {
-        return new TextItemTooltipComponent(
-                Text.translatable("exmod.tooltip.purchase", String.valueOf(toShopAmount)).setStyle(Style.EMPTY.withColor(this.getColor())),
-                new ItemStack(Registries.ITEM.get(this.fromShopItem), this.fromShopAmount)
-        );
-    }
-
-    @Override
-    public TooltipData data() {
-        return this;
-    }
-
-    @Override
     public boolean matches(ItemStack stack) {
         return Registries.ITEM.getId(stack.getItem()).equals(toShopItem);
     }
-
 }

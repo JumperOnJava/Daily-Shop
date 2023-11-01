@@ -1,6 +1,6 @@
 package dev.v4lk.exmod;
 
-import io.github.jumperonjava.multitooltipapi.MutliTooltipApi;
+import dev.v4lk.exmod.client.ExchangemachinemodClient;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.FabricPacket;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
@@ -20,6 +20,7 @@ import java.util.List;
 
 public class ConfigSynchronizer {
     public static final Identifier CHANNEL = new Identifier("exmod","init");
+
     public static void server(ServerPlayNetworkHandler serverPlayNetworkHandler, MinecraftServer minecraftServer) {
         ServerPlayNetworking.send(serverPlayNetworkHandler.player,new SyncPacket(Exchangemachinemod.SYNC_TRADES));
     }
@@ -28,8 +29,8 @@ public class ConfigSynchronizer {
     }
 
     private static void sync(SyncPacket syncPacket, ClientPlayerEntity clientPlayerEntity, PacketSender packetSender) {
-        MutliTooltipApi.matches.removeIf(match -> match instanceof DailyShopTradeOffer);
-        MutliTooltipApi.matches.addAll(syncPacket.trades);
+        ExchangemachinemodClient.matches.removeIf(match -> match instanceof DailyShopTradeOffer);
+        ExchangemachinemodClient.matches.addAll(syncPacket.trades);
     }
 
     public static class SyncPacket implements FabricPacket {
