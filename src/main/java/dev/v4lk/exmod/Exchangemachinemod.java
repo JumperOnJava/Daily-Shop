@@ -5,6 +5,9 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.event.Event;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
@@ -224,15 +227,13 @@ public class Exchangemachinemod implements ModInitializer {
 
                 tradeOfferList.add(new ExchangeFactory(toShop, fromShop, fromShopAmount, toShopAmount));
             }
-            var hasErrorToCrash = false;
-            for (var key : wrongIdItemsCheck.keySet()) {
-                if (wrongIdItemsCheck.get(key).equals(Items.AIR)){
-                    LOGGER.error("WRONG ITEM IDENTIFIER %s".formatted(key));
-                    hasErrorToCrash=true;
+            ServerLifecycleEvents.SERVER_STARTING.register((minecraftServer)->{
+                for (var key : wrongIdItemsCheck.keySet()) {
+                    if (wrongIdItemsCheck.get(key).equals(Items.AIR)){
+                        LOGGER.error("WRONG ITEM IDENTIFIER %s".formatted(key));
+                    }
                 }
-            }
-            if(hasErrorToCrash)
-                throw new RuntimeException("Config contains nonexistent items");
+            });
 
 
             TRADES = tradeOfferList.toArray(new TradeOffers.Factory[0]);
