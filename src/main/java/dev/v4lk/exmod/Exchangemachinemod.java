@@ -5,9 +5,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
-import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
@@ -17,7 +15,10 @@ import net.minecraft.entity.Entity;
 import net.minecraft.item.*;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.text.Style;
 import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.village.TradeOffer;
@@ -25,7 +26,6 @@ import net.minecraft.village.TradeOffers;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.spongepowered.asm.mixin.injection.code.InsnListReadOnly;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -33,7 +33,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static net.minecraft.server.command.CommandManager.*;
+import static net.minecraft.server.command.CommandManager.literal;
 
 public class Exchangemachinemod implements ModInitializer {
 
@@ -156,6 +156,7 @@ public class Exchangemachinemod implements ModInitializer {
     public static int tradeAmounts;
     public static TradeOffers.Factory[] TRADES;
     public static ArrayList<Integer> raritiesList = new ArrayList<>();
+    private static HashMap<Identifier, Item> wrongIdItemsCheck = new HashMap<>();
 
     public static class ExchangeFactory implements TradeOffers.Factory {
         Item item, currency;
@@ -181,6 +182,40 @@ public class Exchangemachinemod implements ModInitializer {
 
     @Override
     public void onInitialize() {
+        ServerLifecycleEvents.SERVER_STARTING.register(Exchangemachinemod::reload);
+
+        Registry.register(Registries.BLOCK, new Identifier("exmod", "exchange_block"), EXCHANGE_BLOCK);
+        Registry.register(Registries.ITEM, new Identifier("exmod", "exchange_block"), EXCHANGE_BLOCK_ITEM);
+        ItemGroupEvents.modifyEntriesEvent(ItemGroups.BUILDING_BLOCKS).register(content -> {
+            content.add(EXCHANGE_BLOCK_ITEM);
+        });
+
+        CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> dispatcher.register(literal("reloadmachineconfig")
+                .requires(source -> source.hasPermissionLevel(4))
+                .executes(context -> {
+                    reload(null);
+                    context.getSource().sendMessage(Text.literal("Config reloaded."));
+                    return 1;
+                })));
+        CommandRegistrationCallback.EVENT.register((dispatcher,registryAccess,registrationEnvironment)-> {
+            dispatcher.register(
+                    literal("dailyshop_log_wrong_ids").executes(context -> {
+                        for (var key : wrongIdItemsCheck.keySet()) {
+                            if (wrongIdItemsCheck.get(key).equals(Items.AIR)) {
+                                LOGGER.error("WRONG ITEM IDENTIFIER %s".formatted(key));
+                                if(context.getSource().isExecutedByPlayer()){
+                                    context.getSource().getPlayer().sendMessage(Text.literal("WRONG ITEM IDENTIFIER %s".formatted(key)).setStyle(Style.EMPTY.withColor(Formatting.RED)));
+                                }
+                            }
+                        }
+                        return 1;
+                    })
+            );
+        });
+        ServerPlayConnectionEvents.INIT.register(ConfigSynchronizer::server);
+    }
+
+    public static void reload(MinecraftServer server) {
         if (!(configFile.exists())) {
             try {
                 configFile.createNewFile();
@@ -200,7 +235,7 @@ public class Exchangemachinemod implements ModInitializer {
             JsonObject json = JsonParser.parseReader(new FileReader(configFile)).getAsJsonObject();
             ArrayList<Integer> rarities = new ArrayList<>();
 
-            var wrongIdItemsCheck = new HashMap<Identifier, Item>();
+            wrongIdItemsCheck = new HashMap<>();
             tradeAmounts = json.get("trades-amount").getAsInt();
             List<TradeOffers.Factory> tradeOfferList = new ArrayList<>();
             JsonObject items = json.getAsJsonObject("trades");
@@ -227,69 +262,8 @@ public class Exchangemachinemod implements ModInitializer {
 
                 tradeOfferList.add(new ExchangeFactory(toShop, fromShop, fromShopAmount, toShopAmount));
             }
-            ServerLifecycleEvents.SERVER_STARTING.register((minecraftServer)->{
-                for (var key : wrongIdItemsCheck.keySet()) {
-                    if (wrongIdItemsCheck.get(key).equals(Items.AIR)){
-                        LOGGER.error("WRONG ITEM IDENTIFIER %s".formatted(key));
-                    }
-                }
-            });
 
 
-            TRADES = tradeOfferList.toArray(new TradeOffers.Factory[0]);
-            raritiesList = rarities;
-        }catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-
-        Registry.register(Registries.BLOCK, new Identifier("exmod", "exchange_block"), EXCHANGE_BLOCK);
-        Registry.register(Registries.ITEM, new Identifier("exmod", "exchange_block"), EXCHANGE_BLOCK_ITEM);
-        ItemGroupEvents.modifyEntriesEvent(ItemGroups.BUILDING_BLOCKS).register(content -> {
-            content.add(EXCHANGE_BLOCK_ITEM);
-        });
-
-        CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> dispatcher.register(literal("reloadmachineconfig")
-                .requires(source -> source.hasPermissionLevel(4))
-                .executes(context -> {
-                    reload();
-                    context.getSource().sendMessage(Text.literal("Config reloaded."));
-                    return 1;
-                })));
-        ServerPlayConnectionEvents.INIT.register(ConfigSynchronizer::server);
-    }
-
-    public static void reload() {
-        if (!(configFile.exists())) {
-            try {
-                configFile.createNewFile();
-
-                FileWriter fileWriter = new FileWriter(configFile);
-                BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
-                bufferedWriter.write(defaultConfig);
-                bufferedWriter.close();
-
-                LOGGER.info("Default config has been written to the file.");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-        try {
-            JsonObject json = JsonParser.parseReader(new FileReader(configFile)).getAsJsonObject();
-            ArrayList<Integer> rarities = new ArrayList<>();
-
-            tradeAmounts = json.get("trades-amount").getAsInt();
-            List<TradeOffers.Factory> tradeOfferList = new ArrayList<>();
-            JsonObject items = json.getAsJsonObject("trades");
-            for (Map.Entry<String, JsonElement> entry : items.entrySet()) {
-                String itemName = entry.getKey();
-                int price = entry.getValue().getAsJsonObject().get("price").getAsInt();
-                int amount = entry.getValue().getAsJsonObject().get("amount").getAsInt();
-                String currency = entry.getValue().getAsJsonObject().get("currency").getAsString();
-                int rarity = entry.getValue().getAsJsonObject().get("rarity").getAsInt();
-                rarities.add(rarity);
-                tradeOfferList.add(new ExchangeFactory(Registries.ITEM.get(new Identifier(itemName)), Registries.ITEM.get(new Identifier(currency)), price, amount));
-            }
 
             TRADES = tradeOfferList.toArray(new TradeOffers.Factory[0]);
             raritiesList = rarities;
